@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "354292035943",
+    "project_id": "healthier-f35d8",
+    "storage_bucket": "healthier-f35d8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:354292035943:android:946eaba0423001a1ce7fc2",
+        "android_client_info": {
+          "package_name": "com.example.healthier"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBGGmIn-6p6BGR4Dp94Jt97OMuWJMN9XSk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
