@@ -26,26 +26,18 @@ A minimalist, Notion-like health companion app for older adults to track medicat
 
 ### Core App Structure
 - ✅ **Home Screen** - Calming “Now” medication card, timeline of today’s plan with urgency outlines, and quick log actions tuned for older adults
-- ✅ **Today Actions & SOS** - Inline scan shortcut next to greeting, single-row quick actions, and a full-width Emergency SOS button leading to a countdown alert flow
-- ✅ **Beautiful Reference/Insights Screen** - Modern glassmorphic UI with custom background, cards, and filter chips
-- ✅ **Profile Screen** - Glassmorphic profile hub with hero card, personal details, modular health overview, care circle, preferences, and documents
-- ✅ **Medications Planner** - Weekly calendar view with scrollable day cards, per-day drill-in, and AI insight modals
-- ✅ **AI Chat Interface** - Context-aware chat with Markdown rendering, streaming responses, and in-thread thinking indicator
-- ✅ **Bottom Navigation** - Seamless switching between Home, Reference, Profile, and AI Chat with persistent tab state
-- ✅ **Settings & API Key Management** - Configurable Gemini API key and system prompts
 
 ### Firebase Backend (Complete)
-- ✅ **Authentication** - Email/password sign-in/sign-up with Firebase Auth
-- ✅ **Chat Persistence** - Real-time conversation and message storage in Firestore
-- ✅ **Conversation History** - View, rename, delete, and auto-title conversations
-- ✅ **Auto-generated Titles** - Chat model emits `[title:...]` tokens to rename conversations after meaningful topic shifts
-- ✅ **Security Rules** - User-isolated Firestore rules for data privacy
+- **Authentication** - Email/password sign-in/sign-up with Firebase Auth
+- **Chat Persistence** - Real-time conversation and message storage in Firestore
+- **Conversation History** - View, rename, delete, and auto-title conversations
+- **Security Rules** - User-isolated Firestore rules with shared `config/ai` access for Gemini key
 
 ### AI Features
-- ✅ **Unified Chat & Titles** - Single Gemini model handles responses plus inline title directives `[title:...]`
-- ✅ **Context Awareness** - Chat responses incorporate user data and conversation history
-- ✅ **Streaming Responses** - Real-time message streaming with thinking indicators
-- ✅ **Smart Titling** - Automatic conversation titles based on content, triggered on tab switches
+- **Unified Chat & Titles** - Single Gemini model handles responses plus inline title directives `[title:...]`, backed by shared Gemini key
+- **Context Awareness** - Chat responses incorporate user data and conversation history
+- **Streaming Responses** - Real-time message streaming with thinking indicators
+- **Smart Titling** - Automatic conversation titles based on content, triggered on tab switches
 
 ## UX Principles
 
@@ -194,11 +186,11 @@ A minimalist, Notion-like health companion app for older adults to track medicat
 - **Security**: User-scoped Firestore rules
 
 ### Setup (Already Done)
-1. ✅ Firebase project created and configured
-2. ✅ FlutterFire CLI configuration complete
-3. ✅ Dependencies added and Firebase initialized
-4. ✅ Firestore rules deployed
-5. ✅ Authentication enabled in Firebase Console
+1. Firebase project created and configured
+2. FlutterFire CLI configuration complete
+3. Dependencies added and Firebase initialized
+4. Firestore rules deployed
+5. Authentication enabled in Firebase Console
 
 ### Data Structure
 ```
@@ -290,14 +282,15 @@ lib/
 
 ## Recent Updates
 
-- ✅ **Firebase Backend Complete**: Authentication, chat persistence, conversation history, and auto-titling implemented
-- ✅ **Dual AI Models**: Separate models for chat responses and conversation titles
-- ✅ **Live Conversation Titles**: AppBar shows current conversation title from Firestore
-- ✅ **In-Thread Thinking Indicator**: Shows typing bubble while AI generates responses
-- ✅ **Persistent Tab State**: Chat page state preserved when switching tabs
-- ✅ **Conversation Management**: Full CRUD operations for conversations with rename/delete
-- ✅ **UI Polish**: Glassy, minimalist design with radial gradients and backdrop filters
-- ✅ **Weekly Planner Refresh**: Scrollable day strip, stacked medication previews, dividers, and consistent 32pt headings across top-level screens
+- **Firebase Backend Complete**: Authentication, chat persistence, conversation history, and auto-titling implemented
+- **Dual AI Models**: Separate models for chat responses and conversation titles
+- **Live Conversation Titles**: AppBar shows current conversation title from Firestore
+- **In-Thread Thinking Indicator**: Shows typing bubble while AI generates responses
+- **Persistent Tab State**: Chat page state preserved when switching tabs
+- **Conversation Management**: Full CRUD operations for conversations with rename/delete
+- **UI Polish**: Glassy, minimalist design with radial gradients and backdrop filters
+- **Weekly Planner Refresh**: Scrollable day strip, stacked medication previews, dividers, and consistent 32pt headings across top-level screens
+- **Shared Gemini Key Flow**: Firestore `config/ai.geminiApiKey` powers chat by default, settings sheet allows overrides
 
 ## Architecture Diagram
 
