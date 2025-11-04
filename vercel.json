@@ -1,5 +1,9 @@
 {
-  "buildCommand": "flutter build web --release",
   "outputDirectory": "build/web",
-  "framework": "flutter"
+  "redirects": [
+    { "source": "/favicon.ico", "destination": "/favicon.png", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
