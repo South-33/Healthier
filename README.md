@@ -318,11 +318,3 @@ flowchart TB
 
 ### Privacy
 - Default local-only; explicit consent; clear data sharing settings.
-
-## Open Questions
-
-- **AI Provider Preference**: Currently using Gemini; open to alternatives?
-- **Local-Only AI Requirement**: Mandatory or optional fallback?
-- **Caregiver View/Sharing**: In v1 or later?
-- **Regions**: Any locales/languages to prioritize?
-- **Vitals Scope**: Which are must-have for v1?
