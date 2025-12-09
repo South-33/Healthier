@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:healthier/features/reference/widgets/glassmorphic_container.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fa;
+import 'package:healthier/data/guest_mode_manager.dart';
+import 'package:firebase_ui_auth/firebase_ui_auth.dart' as fui;
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -8,6 +11,8 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isGuest = GuestModeManager().isGuestMode;
+    
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: Container(
@@ -35,6 +40,10 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 28),
+                      if (isGuest) ...[
+                        _GuestModeNotice(theme: theme),
+                        const SizedBox(height: 28),
+                      ],
                       _HeroCard(theme: theme),
                       const SizedBox(height: 32),
                       _PersonalInfoCard(theme: theme),
@@ -46,6 +55,9 @@ class ProfileScreen extends StatelessWidget {
                       _PreferencesCard(theme: theme),
                       const SizedBox(height: 28),
                       _DocumentsCard(theme: theme),
+                      const SizedBox(height: 28),
+                      // Logout button
+                      _LogoutButton(isGuest: isGuest),
                       SizedBox(height: MediaQuery.of(context).padding.bottom + 32),
                     ],
                   ),
@@ -739,3 +751,250 @@ class _DocumentRow extends StatelessWidget {
     );
   }
 }
+
+class _GuestModeNotice extends StatelessWidget {
+  const _GuestModeNotice({required this.theme});
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassmorphicContainer(
+      blur: 24,
+      borderRadius: 24,
+      color: const Color(0xFFFFA726), // Warm orange color for attention
+      opacity: 0.2,
+      border: Border.all(color: const Color(0xFFFFA726).withOpacity(0.4), width: 1.5),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFFFFF3E0),
+              Color(0xFFFFE0B2),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          border: Border.all(
+            color: const Color(0xFFFFA726).withOpacity(0.4),
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFA726).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.info_outline,
+                    color: Color(0xFFE65100),
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Guest Mode',
+                        style: GoogleFonts.lora(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFE65100),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'You\'re browsing as a guest',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF795548),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Text(
+              'Create an account to save your health data, sync across devices, and unlock all features including personalized insights and cloud backup.',
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                height: 1.5,
+                color: const Color(0xFF4E342E),
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => fui.SignInScreen(
+                            providers: [fui.EmailAuthProvider()],
+                            actions: [
+                              fui.AuthStateChangeAction<fui.SignedIn>((context, state) {
+                                // Disable guest mode when user signs in
+                                GuestModeManager().disableGuestMode();
+                                Navigator.of(context).pop();
+                              }),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.person_add, size: 20),
+                    label: Text(
+                      'Create Account',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF8F00),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                OutlinedButton(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text(
+                          'Guest Mode Info',
+                          style: GoogleFonts.lora(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        content: Text(
+                          'In guest mode:\n\n• Your data is stored locally on this device only\n• Data will be lost if you clear app data or uninstall\n• Some features may be limited\n• No cloud sync or backup\n\nCreate an account to save your data permanently!',
+                          style: GoogleFonts.inter(
+                            fontSize: 15,
+                            height: 1.5,
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Got it'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFE65100),
+                    side: const BorderSide(color: Color(0xFFFFA726), width: 2),
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                  ),
+                  child: const Icon(Icons.help_outline, size: 22),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LogoutButton extends StatelessWidget {
+  const _LogoutButton({required this.isGuest});
+  
+  final bool isGuest;
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassmorphicContainer(
+      blur: 18,
+      borderRadius: 24,
+      opacity: 0.7,
+      border: Border.all(color: Colors.white.withOpacity(0.22)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Account',
+              style: GoogleFonts.lora(fontSize: 24, fontWeight: FontWeight.w600, color: Colors.black87),
+            ),
+            const SizedBox(height: 18),
+            ElevatedButton.icon(
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(
+                      isGuest ? 'Exit Guest Mode?' : 'Sign Out?',
+                      style: GoogleFonts.lora(fontWeight: FontWeight.w600),
+                    ),
+                    content: Text(
+                      isGuest
+                          ? 'Your guest session data will be lost. Consider creating an account to save your data.'
+                          : 'Are you sure you want to sign out?',
+                      style: GoogleFonts.inter(fontSize: 15, height: 1.5),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: Text(
+                          isGuest ? 'Exit' : 'Sign Out',
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+                
+                if (confirmed == true && context.mounted) {
+                  if (isGuest) {
+                    // Exit guest mode (will show sign-in screen)
+                    GuestModeManager().disableGuestMode();
+                  } else {
+                    // Sign out from Firebase
+                    await fa.FirebaseAuth.instance.signOut();
+                  }
+                }
+              },
+              icon: Icon(isGuest ? Icons.exit_to_app : Icons.logout),
+              label: Text(
+                isGuest ? 'Exit Guest Mode' : 'Sign Out',
+                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red[600],
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

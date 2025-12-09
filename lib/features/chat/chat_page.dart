@@ -12,6 +12,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:healthier/data/repositories/conversation_repository.dart';
 import 'package:healthier/data/models/message.dart' as model;
 import 'package:healthier/data/models/conversation.dart' as convo;
+import 'package:healthier/data/guest_mode_manager.dart';
 
 // API key handling
 // - Preferred for dev: run with dart-define so the key isn't committed.
@@ -161,6 +162,9 @@ class _ChatPageState extends State<ChatPage> {
     if (savedConv != null && savedConv.isNotEmpty) {
       _conversationId = savedConv;
     }
+    
+    // Fetch shared API key for all users (including guests)
+    // Firestore rules now allow unauthenticated read of config/ai
     try {
       _sharedApiKey = await _fetchSharedApiKey();
       if (!_hasUserOverride && (_sharedApiKey?.isNotEmpty ?? false)) {
@@ -171,15 +175,21 @@ class _ChatPageState extends State<ChatPage> {
         debugPrint('Failed to load shared Gemini key: $e');
       }
     }
+    
     await _configureModelAndChat();
+    
     // After configuring model, ensure Firestore conversation and subscribe
-    try {
-      if (FirebaseAuth.instance.currentUser != null) {
-        await _ensureConversationAndSubscribe();
+    // Skip Firestore conversation persistence for guest users (they use local-only chat)
+    final isGuest = GuestModeManager().isGuestMode;
+    if (!isGuest) {
+      try {
+        if (FirebaseAuth.instance.currentUser != null) {
+          await _ensureConversationAndSubscribe();
+        }
+      } catch (e) {
+        // Common cause: Firestore rules not deployed → permission-denied
+        _initError = 'Could not initialize chat (check Firestore rules).';
       }
-    } catch (e) {
-      // Common cause: Firestore rules not deployed → permission-denied
-      _initError = 'Could not initialize chat (check Firestore rules).';
     }
     setState(() {
       _loadingPrefs = false;
@@ -224,7 +234,15 @@ class _ChatPageState extends State<ChatPage> {
       apiKey: _apiKey,
       systemInstruction: Content.text(_systemPromptWithTitleGuidance),
     );
-    _chat = null;
+    
+    // For guest users, initialize chat session immediately since they skip Firestore
+    final isGuest = GuestModeManager().isGuestMode;
+    if (isGuest) {
+      _chat = _model!.startChat();
+    } else {
+      _chat = null; // Will be initialized in _ensureConversationAndSubscribe for authenticated users
+    }
+    
     if (mounted) {
       setState(() {
         _initError = null;
@@ -292,7 +310,19 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> _sendMessage(String text) async {
-    if (text.trim().isEmpty || _chat == null || _conversationId == null) return;
+    if (text.trim().isEmpty || _chat == null) return;
+    
+    final isGuest = GuestModeManager().isGuestMode;
+    
+    // For guests, use local-only chat without Firestore
+    if (isGuest) {
+      await _sendMessageGuest(text);
+      return;
+    }
+    
+    // For authenticated users, use Firestore persistence
+    if (_conversationId == null) return;
+    
     setState(() {
       _isLoading = true;
     });
@@ -361,12 +391,62 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  // Guest mode: local-only chat without Firestore persistence
+  Future<void> _sendMessageGuest(String text) async {
+    final userMessage = text.trim();
+    setState(() {
+      _messages.add(_Message.user(userMessage));
+      _isLoading = true;
+    });
+    _controller.clear();
+    _scrollToBottom();
+
+    final buffer = StringBuffer();
+    DateTime lastScroll = DateTime.fromMillisecondsSinceEpoch(0);
+
+    try {
+      final stream = _chat!.sendMessageStream(Content.text(userMessage));
+      
+      // Add placeholder for assistant message
+      setState(() {
+        _messages.add(_Message.assistant(''));
+      });
+      
+      await for (final response in stream) {
+        final chunk = response.text ?? '';
+        if (chunk.isEmpty) continue;
+        buffer.write(chunk);
+        
+        // Update the last message (assistant's response)
+        setState(() {
+          _messages[_messages.length - 1] = _Message.assistant(buffer.toString());
+        });
+        
+        // Throttle scrolling to reduce jerkiness
+        final now = DateTime.now();
+        if (now.difference(lastScroll) > const Duration(milliseconds: 300)) {
+          lastScroll = now;
+          _scrollToBottom();
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _messages.add(_Message.assistant('Error: $e'));
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _scrollToBottom();
+      }
+    }
+  }
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scrollController.hasClients) return;
       _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent + 80,
-        duration: const Duration(milliseconds: 250),
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 150),
         curve: Curves.easeOut,
       );
     });
@@ -607,6 +687,8 @@ class _ChatPageState extends State<ChatPage> {
                           textInputAction: TextInputAction.send,
                           onSubmitted:
                               _isLoading ? null : (v) => _sendMessage(v),
+                          maxLines: 5,
+                          minLines: 1,
                           decoration: const InputDecoration(
                             hintText: 'Ask a question...',
                             filled: true,

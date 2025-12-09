@@ -2,7 +2,8 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /config/ai {
-      allow get: if request.auth != null;
+      // Allow anyone (including guests) to read the shared Gemini API key
+      allow get: if true;
       allow list: if false;
     }
 

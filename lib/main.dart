@@ -129,7 +129,32 @@ class MyApp extends StatelessWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(24),
-                    child: child ?? const SizedBox.shrink(),
+                    child: Stack(
+                      children: [
+                        child ?? const SizedBox.shrink(),
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          child: IgnorePointer(
+                            ignoring: true,
+                            child: Container(
+                              height: 40,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.white,
+                                    Colors.white.withOpacity(0),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

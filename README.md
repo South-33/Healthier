@@ -29,14 +29,16 @@ A minimalist, Notion-like health companion app for older adults to track medicat
 
 ### Firebase Backend (Complete)
 - **Authentication** - Email/password sign-in/sign-up with Firebase Auth
-- **Chat Persistence** - Real-time conversation and message storage in Firestore
+- **Guest Mode** - Continue as guest option with local-only chat (no account required)
+- **Chat Persistence** - Real-time conversation and message storage in Firestore (authenticated users)
 - **Conversation History** - View, rename, delete, and auto-title conversations
-- **Security Rules** - User-isolated Firestore rules with shared `config/ai` access for Gemini key
+- **Security Rules** - User-isolated Firestore rules; shared `config/ai` readable by all for Gemini key
 
 ### AI Features
-- **Unified Chat & Titles** - Single Gemini model handles responses plus inline title directives `[title:...]`, backed by shared Gemini key
+- **Guest AI Chat** - Full AI chat functionality for guests with in-memory message storage
+- **Unified Chat & Titles** - Single Gemini model handles responses plus inline title directives `[title:...]`
 - **Context Awareness** - Chat responses incorporate user data and conversation history
-- **Streaming Responses** - Real-time message streaming with thinking indicators
+- **Streaming Responses** - Real-time message streaming with thinking indicators and smooth scroll
 - **Smart Titling** - Automatic conversation titles based on content, triggered on tab switches
 
 ## UX Principles
@@ -257,9 +259,10 @@ lib/
 ├── core/ (theme, tokens, utils, routing)
 ├── data/
 │   ├── models/ (message.dart, conversation.dart)
-│   └── repositories/ (auth_repository.dart, conversation_repository.dart)
+│   ├── repositories/ (auth_repository.dart, conversation_repository.dart)
+│   └── guest_mode_manager.dart
 ├── features/
-│   ├── auth/ (auth_gate.dart)
+│   ├── auth/ (auth_gate.dart, custom_sign_in_screen.dart)
 │   ├── chat/ (chat_page.dart)
 │   ├── reference/ (reference_screen.dart)
 │   └── ... (other features)
@@ -282,6 +285,13 @@ lib/
 
 ## Recent Updates
 
+- **Guest Mode Complete**: 
+  - "Continue as Guest" button on sign-in screen to bypass authentication
+  - Guest users can use AI chat with local-only message storage (no Firestore persistence)
+  - Guest mode banner in Profile screen encourages account creation
+  - "Exit Guest Mode" / "Sign Out" button in Profile screen with confirmation dialogs
+  - Firestore rules updated to allow unauthenticated access to shared Gemini API key
+- **Improved Chat UX**: Smoother scroll-to-bottom behavior with throttled scrolling during message streaming
 - **Firebase Backend Complete**: Authentication, chat persistence, conversation history, and auto-titling implemented
 - **Dual AI Models**: Separate models for chat responses and conversation titles
 - **Live Conversation Titles**: AppBar shows current conversation title from Firestore
